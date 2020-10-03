@@ -12,7 +12,7 @@ class VueRouter {
     // 把current作为响应式数据
     // 将来发生变化，router-view的render函数能够再次执行
     const initial = window.location.hash.slice(1) || "/";
-    Vue.util.defineReactive(this, 'current', initial)
+    Vue.util.defineReactive(this, 'current', initial)//响应式更新视图，会重新触发所依赖的render函数 这是关键
 
     // 监听hash变化
     window.addEventListener("hashchange", () => {
@@ -22,7 +22,7 @@ class VueRouter {
   }
 }
 // 参数1是Vue.use调用时传入的
-VueRouter.install = function(_Vue) {
+VueRouter.install = function(_Vue) {//此处_Vue 是真实的vue实例
   Vue = _Vue;
 
   // 1.挂载$router属性
@@ -38,7 +38,7 @@ VueRouter.install = function(_Vue) {
     },
   });
 
-  // 2.注册实现两个组件router-view,router-link
+  // 2.注册实现两个全局组件router-view,router-link
   Vue.component("router-link", {
     props: {
       to: {
@@ -56,7 +56,7 @@ VueRouter.install = function(_Vue) {
             href: "#" + this.to,
           },
         },
-        this.$slots.default
+        this.$slots.default//取链接中默认内容
       );
     },
   });
