@@ -6,7 +6,7 @@ import Home from '../views/Home.vue'
 // 内部做了什么：
 //    1）实现并声明两个组件router-view  router-link
 //    2) install: this.$router.push()
-Vue.use(VueRouter)//其实里面执行的是plugin.install.apply(plugin, args) //这里的plugin 是VueRouter
+Vue.use(VueRouter)//其实里面执行的是plugin.install.apply(plugin, args) //这里的plugin 是VueRouter args是Vue 实例
 console.log(Vue.use,'vueusefuncion')
 
 const routes = [
