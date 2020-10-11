@@ -1,10 +1,10 @@
 class Kvue {
     constructor(options) {
         this.$options = options;
-        this.$data = $options.data;
+        this.$data = options.data;
         observe(this.$data);//data 响应式处理
-        Proxy(this);//代理options.data中的数据到实例下,实现app.xxx 直接调用
-        new Compile(options.ele,this);//编译模板
+        proxy(this);//代理options.data中的数据到实例下,实现app.xxx 直接调用
+        new Compile(options.el,this);//编译模板
     }
 }
 //遍历参数对象，对其所有属性添加响应式
@@ -36,17 +36,18 @@ function defineReactive(obj,key,value){
     observe(value);
 
     // 创建管家dep 实例
-    const dep = new dep();
+    const dep = new Dep();
 
     Object.defineProperty(obj,key,{
         get (){
-            console.log('get',value);
+            
             //收集依赖
             Dep.target && dep.addDep(Dep.target);
             return value;
         },
         set (newValue){
-            if(value !== newValue){
+            if(newValue !== value){
+                
                 //如果newValue 是对象，需要在进行响应式
                 observe(newValue);
                 value = newValue;
@@ -96,37 +97,54 @@ class Compile{
     compile(el){
         //遍历元素的子节点，根据不同的节点类型做相应的处理
         const childNodes = el.childNodes;
+        const _this = this;
         childNodes.forEach(node =>{
             if(node.nodeType === 1){//如果是元素节点
                 const attrs = node.attributes;
                 Array.from(attrs).forEach((attr) => {
                     const attrName = attr.name;
                     const exp = attr.value;
-                    if(atrrName.startWith('k-')){
-                        const dir = attrName.subString(2);
-                        this[dir] && this[dir](node,exp);//看data中是否有对应数据或者方法
+                    if(attrName.startsWith('k-')){
+                        const dir = attrName.substring(2);//counter
+                        this[dir] && this[dir](node,exp);//看data中是否有对应数据或者方法,text()、html()
+                    }
+                    if(attrName === 'v-model'){
+                        node.value = this.$vm[exp];
+                        node.addEventListener('input',function(e){
+                            _this.$vm[exp] = e.target.value;
+                        });
+                        node.removeAttribute('v-model');
+                    }
+                    if (attrName.startsWith('@')){
+                        const fn = this.$vm[exp];
+                        node.addEventListener(exp,function(){
+                            if(fn){
+                                fn.call(_this.$vm,...arguments);
+                            }
+                        });
                     }
                 })
             }else if(this.isInter(node)){
                 this.update(node,RegExp.$1,'text');//处理插值{{xx}}
             }
+             // 递归
+            if(node.childNodes) {
+                this.compile(node);
+            }
         });
-        // 递归
-      if(node.childNodes) {
-        this.compile(node);
-      }
+       
     }
     isInter(node){
-        return node.nodeType === '3' && /\{\{(.*)\}\}/.test(node.textContent);//自动捕获分组的数据到RegExp对象上，可以用RegExp.$xx 来获取
+        return node.nodeType === 3 && /\{\{(.*)\}\}/.test(node.textContent);//自动捕获分组的数据到RegExp对象上，可以用RegExp.$xx 来获取
     }
     
     update(node,exp,dir){//提取update方法，exp 是属性值 ，dir是属性key
         // 初始化
-        const fn = this[dir + 'updater'];
+        const fn = this[dir + 'Updater'];
         fn && fn(node,this.$vm[exp]);
-        // 更新、监视变化
+        // 添加watcher
         new Watcher(this.$vm,exp,function(val){
-            fn && fn(val);
+            fn && fn(node,val);
         })
     }
     // k-text
@@ -134,6 +152,7 @@ class Compile{
         this.update(node, exp, 'text');
     }
     textUpdater(node,val){
+        
         node.textContent = val;
     }
     // k-html
@@ -160,6 +179,7 @@ class Watcher{
     }
     // 未来被dep调用
     update(){
+        
         // 执行实际更新操作
         this.updateFn.call(this.vm,this.vm[this.key]);
     }

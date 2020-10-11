@@ -6,24 +6,31 @@
 </head>
 <body>
     <div id="app">
-        <p>{{counter}}</p>
+        <p @click='click'>{{counter}}</p>
         <p>{{counter}}</p>
         <p k-text="counter"></p>
         <p k-html="desc"></p>
+        <input type="text" v-model="inputTxt">
+        <p>{{inputTxt}}</p>
       </div>
       <!-- <script src="node_modules/vue/dist/vue.js"></script> -->
       <script src="kvue.js"></script>
       <script>
-        const app = new KVue({
+        const app = new Kvue({
           el: "#app",
           data: {
             counter: 1,
-            desc: '<span style="color:red">vue模拟</span>'
+            desc: '<span style="color:red">vue模拟</span>',
+            inputTxt:'想睡觉roz',
+            click:function(){
+                console.log(this,',,,,,,,,,,,,')
+                this.counter++;
+            }
           },
         });
-        setInterval(() => {
-          app.counter++;
-        }, 1000);
+        // setInterval(() => {
+        //   app.counter++;
+        // }, 1000);
       </script>
 </body>
 </html>
