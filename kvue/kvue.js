@@ -108,20 +108,10 @@ class Compile{
                         const dir = attrName.substring(2);//counter
                         this[dir] && this[dir](node,exp);//看data中是否有对应数据或者方法,text()、html()
                     }
-                    if(attrName === 'v-model'){
-                        node.value = this.$vm[exp];
-                        node.addEventListener('input',function(e){
-                            _this.$vm[exp] = e.target.value;
-                        });
-                        node.removeAttribute('v-model');
-                    }
+                    //事件处理
                     if (attrName.startsWith('@')){
-                        const fn = this.$vm[exp];
-                        node.addEventListener(exp,function(){
-                            if(fn){
-                                fn.call(_this.$vm,...arguments);
-                            }
-                        });
+                        const dir = attrName.substring(1);
+                        this.eventHandler(node,exp,dir);
                     }
                 })
             }else if(this.isInter(node)){
@@ -161,6 +151,19 @@ class Compile{
     }
     htmlUpdater(node, value) {
         node.innerHTML = value
+    }
+    eventHandler(node,exp,dir){
+        const fn = this.$vm.$options.methods&&this.$vm.$options.methods[exp];
+        node.addEventListener(dir,fn.bind(this.$vm));
+    }
+    model(node,exp){
+        this.update(node,exp,'model');
+        node.addEventListener('input',e => {
+            this.$vm[exp] = e.target.value;
+        })
+    }
+    modelUpdater(node,value){
+        node.value = value;
     }
     //more...
 }
