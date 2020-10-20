@@ -1,0 +1,71 @@
+<div id="app">
+
+</div>
+
+
+<script>
+  const createAppAPI = (render)=>{
+    return function createApp(rootComponet){//即为vue.createApp中所传options
+      const app = {
+        mount(rootContainer){
+          const vnode = {tag:rootComponet};
+          render(vnode,rootContainer)
+
+        }
+      }
+      return app
+    }
+  }
+  const createRenderer = params => {
+    const patch = (n1,n2,container) => {
+      const rootComponet = n2.tag;
+      const ctx = {...rootComponet.data()};
+      const vnode = rootComponet.render.call(ctx);
+      const parent = params.querySelector(container);
+      const child = params.createElement(vnode.tag);
+      if(typeof vnode.children ===  'string'){
+        child.textContent  = vnode.children;
+      }
+      params.insert(child,parent);
+    }
+    const render = (vnode,container) => {
+      patch(container._vnode||null,vnode,container)
+      container._vnode = vnode;
+    }
+
+    return {
+      render,
+      createApp:createAppAPI(render)
+    }
+  }
+  const renderer = createRenderer({
+    querySelector(sel){
+      return document.querySelector(sel)
+    },
+    createElement(tag){
+      return document.createElement(tag)
+    },
+    insert(child,parent){
+      parent.appendChild(child)
+    }
+  })
+  const Vue = {
+    createApp(options){
+      return renderer.createApp(options)//等于createAppAPI(render)(options),科里化，分步传参
+    }
+  }
+  Vue.createApp({
+    data(){
+      return {
+        foo:'hello vue3'
+      }
+    },
+    render(){
+      return {
+        tag:'h2',
+        children:this.foo
+      }
+    }
+  })
+  .mount('#app')
+</script>
